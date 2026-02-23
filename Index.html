@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador - Laboratorio Clínico</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --light: #f4f7f6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            color: var(--primary);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background: var(--primary);
+            color: var(--white);
+            width: 100%;
+            padding: 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 2rem 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h3 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+
+        .exam-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-add:hover { background: #2980b9; }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .total-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid var(--primary);
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: right;
+        }
+
+        .btn-print {
+            width: 100%;
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Laboratorio BioTech</h1>
+    <p>Cotizador de Exámenes en Línea</p>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h3>Exámenes Disponibles</h3>
+        <div id="lista-examenes">
+            </div>
+    </div>
+
+    <div class="card">
+        <h3>Tu Presupuesto</h3>
+        <div id="carrito-vacio" style="color: #888;">No has seleccionado exámenes.</div>
+        <div id="lista-carrito"></div>
+        
+        <div class="total-section">
+            Total: $<span id="total-precio">0.00</span>
+        </div>
+        
+        <button class="btn-print" onclick="window.print()">Imprimir Presupuesto</button>
+    </div>
+</div>
+
+<script>
+    // Base de datos de exámenes (puedes agregar más aquí)
+    const examenes = [
+        { id: 1, nombre: "Hematología Completa", precio: 15.00 },
+        { id: 2, nombre: "Perfil 20", precio: 45.00 },
+        { id: 3, nombre: "Glicemia", precio: 8.00 },
+        { id: 4, nombre: "Examen de Orina", precio: 10.00 },
+        { id: 5, nombre: "Perfil Lipídico", precio: 25.00 },
+        { id: 6, nombre: "Prueba de Embarazo", precio: 12.00 }
+    ];
+
+    let carrito = [];
+
+    // Cargar exámenes al inicio
+    function cargarExamenes() {
+        const contenedor = document.getElementById('lista-examenes');
+        examenes.forEach(examen => {
+            const div = document.createElement('div');
+            div.className = 'exam-item';
+            div.innerHTML = `
+                <span>${examen.nombre} ($${examen.precio})</span>
+                <button class="btn-add" onclick="agregarAlCarrito(${examen.id})">Añadir</button>
+            `;
+            contenedor.appendChild(div);
+        });
+    }
+
+    // Lógica del carrito
+    function agregarAlCarrito(id) {
+        const examen = examenes.find(e => e.id === id);
+        // Evitar duplicados si prefieres, o permitir varios
+        carrito.push(examen);
+        actualizarInterfaz();
+    }
+
+    function eliminarDelCarrito(index) {
+        carrito.splice(index, 1);
+        actualizarInterfaz();
+    }
+
+    function actualizarInterfaz() {
+        const listaCarrito = document.getElementById('lista-carrito');
+        const totalTxt = document.getElementById('total-precio');
+        const avisoVacio = document.getElementById('carrito-vacio');
+        
+        listaCarrito.innerHTML = '';
+        let total = 0;
+
+        if (carrito.length === 0) {
+            avisoVacio.style.display = 'block';
+        } else {
+            avisoVacio.style.display = 'none';
+        }
+
+        carrito.forEach((item, index) => {
+            total += item.precio;
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <span>${item.nombre}</span>
+                <span>$${item.precio.toFixed(2)} 
+                <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; cursor:pointer;">✕</button></span>
+            `;
+            listaCarrito.appendChild(div);
+        });
+
+        totalTxt.innerText = total.toFixed(2);
+    }
+
+    // Iniciar
+    cargarExamenes();
+</script>
+
+</body>
+</html>
